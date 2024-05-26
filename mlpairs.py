@@ -13,34 +13,7 @@ import warnings
 
 
 class OpticsPairs:
-    """
-    This class implements the pairs selection framework outlined in
-    Simao Moraes Saremtno and Nuno Horta's publication:
-    Enhancing a Pairs Trading strategy with the application
-    of Machine Learning [1].
-    <http://premio-vidigal.inesc.pt/pdf/SimaoSarmentoMSc-resumo.pdf>`_
-
-    Their work is motivated by the need to find "profitable pairs while
-    constraining the search space" [1]. To achieve this, security returns
-    are first reduced via principal component analysis. Next the securities are
-    paired through clustering via the OPTICS algorithim introduced by
-    Ankerst et. al in their publication: OPTICS: Ordering Points To Identify
-    the Clustering Structure [2]
-    <https://www.dbs.ifi.lmu.de/Publikationen/Papers/OPTICS.pdf>`_
-    Finally, the pairs are filtered by criteria including: the Engle-Granger
-    test, analysis of the Hurst exponent, half-life filtering, and practical
-    implementation requirements.
-    """
-
     def __init__(self, data: pd.DataFrame):
-        """
-        Initializes OpticsPairs object and calculates one-period returns of
-        securities.
-
-        :param data: pd.DataFrame containing time series returns of various
-            assets. Dimensions of dataframe should be TxN.
-        """
-
         self.prices = data
         self.securities = self.prices.columns
         self.returns = self.prices.pct_change()[1:]
@@ -62,19 +35,6 @@ class OpticsPairs:
                    n_components_: int = 10,
                    Scaler=StandardScaler(),
                    random_state: int = 42):
-        """
-        Reduces self.returns to dimensions equal to n_components_ through
-        principal component analysis. Returns are first scaled via the Scaler
-        parameter. Then calculate correlation matrix of scaled returns.
-        Finally, principal component analysis is used to reduce dimensions.
-
-        :param n_components_: An integer to denote number of dimensions
-            for pca. Authors recommend n_components_ <= 15 [1].
-        :param Scaler: A transformer to scale input data. Scaled data is
-            recommended for principal component analysis.
-        :param random_state: An integer to denote the seed for PCA() to insure
-            reproducibility.
-        """
 
         if self.returns is None:
             raise ValueError("returns not found: input price dataframe \
@@ -97,13 +57,7 @@ class OpticsPairs:
         self.explained_variance_ratio_ = pipe['pca'].explained_variance_ratio_
 
     def find_pairs(self):
-        """
-        Uses OPTICS algorithim to find clusters of similar securities within
-        PCA component space. Once clusters labels are assigned, function
-        generates series of tuples containing unique pairs of securities
-        within the same cluster.
-        """
-
+      
         if self.returns_reduced is None:
             raise ValueError("returns_reduced not found: must run \
                              .reduce_PCA() before this function")
@@ -132,11 +86,7 @@ class OpticsPairs:
         self.cluster_labels = clustering.labels_
 
     def calc_eg_norm_spreads(self):
-        """
-        Calculates the p-value of the t-stat from the Engle-Granger
-        cointegration test. Calculates normalized beta-adjusted spread
-        series of potential pairs.
-        """
+     
 
         if self.prices is None:
             raise ValueError("prices not found: must initialize with \
@@ -180,14 +130,7 @@ class OpticsPairs:
     @staticmethod
     def get_ols_variables(security_0: str,
                           security_1: str):
-        """
-        Compares t-stats of two Engle-Granger cointegration tests.
-        Returns independent and dependent variables for OLS.
-
-        :params security_0: String identifier of first security.
-        :params security_1: String identifier of second security.
-        """
-
+     
         test_0 = ts.coint(security_0, security_1)
         test_1 = ts.coint(security_1, security_0)
 
@@ -210,10 +153,7 @@ class OpticsPairs:
         return pvalue, x, y
         
     def calc_hurst_exponents(self):
-        """
-        Calculates Hurst exponent of each potential pair's normalized spread.
-        """
-
+     
         if self.norm_spreads is None:
             raise ValueError("norm_spreads not found: must run \
                             .calc_eg_norm_spreads before this function")
